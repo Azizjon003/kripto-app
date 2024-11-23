@@ -6,34 +6,40 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        padding: 20px;
-        max-width: 800px;
+        max-width: 1000px;
         margin: 0 auto;
+        padding: 20px;
       }
-      .result {
+      .controls {
+        margin-bottom: 20px;
+      }
+      .result-panel {
         margin-top: 20px;
         padding: 15px;
         border-radius: 5px;
+        background-color: #f5f5f5;
       }
-      .prime {
-        background-color: #d4edda;
-        color: #155724;
+      .method-info {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 5px;
       }
-      .not-prime {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-      .history {
+      .algorithm-info {
         margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
       }
       table {
         width: 100%;
         border-collapse: collapse;
+        margin-top: 20px;
       }
       th,
       td {
-        padding: 8px;
         border: 1px solid #ddd;
+        padding: 8px;
         text-align: left;
       }
       th {
@@ -42,64 +48,138 @@
     </style>
   </head>
   <body>
-    <h1>Tub sonlarni tekshirish dasturi</h1>
-    <div>
+    <h1>Tub sonlarni tekshirish</h1>
+
+    <div class="controls">
       <input type="number" id="numberInput" placeholder="Sonni kiriting" />
+      <select id="methodSelect">
+        <option value="all">Barcha usullar</option>
+        <option value="fermat">Ferma testi</option>
+        <option value="solovay">Solovay-Strassen testi</option>
+        <option value="miller">Miller-Rabin testi</option>
+        <option value="aks">AKS algoritmi</option>
+      </select>
       <button onclick="checkNumber()">Tekshirish</button>
     </div>
-    <div id="result" class="result"></div>
-    <div class="history">
-      <h2>Tekshirishlar tarixi</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Son</th>
-            <th>Natija</th>
-            <th>Aniqlik</th>
-            <th>Vaqt</th>
-          </tr>
-        </thead>
-        <tbody id="historyTable"></tbody>
-      </table>
+
+    <div id="results" class="result-panel"></div>
+
+    <div class="algorithm-info">
+      <h3>Algoritmlar haqida ma'lumot:</h3>
+      <div class="method-info">
+        <h4>Ferma testi</h4>
+        <p>
+          Ferma kichik teoremasiga asoslangan probabilistik test. a^(n-1) ≡ 1
+          (mod n) tenglamani tekshiradi.
+        </p>
+      </div>
+      <div class="method-info">
+        <h4>Solovay-Strassen testi</h4>
+        <p>
+          Jacobi simboli va modulli arifmetikaga asoslangan probabilistik test.
+        </p>
+      </div>
+      <div class="method-info">
+        <h4>Miller-Rabin testi</h4>
+        <p>
+          Eng keng tarqalgan probabilistik test. Yuqori aniqlik va tezlikni
+          ta'minlaydi.
+        </p>
+      </div>
+      <div class="method-info">
+        <h4>AKS algoritmi</h4>
+        <p>
+          Deterministic algoritm. 100% aniqlik beradi, lekin sekinroq ishlaydi.
+        </p>
+      </div>
     </div>
+
+    <table id="historyTable">
+      <thead>
+        <tr>
+          <th>Son</th>
+          <th>Usul</th>
+          <th>Natija</th>
+          <th>Aniqlik</th>
+          <th>Vaqt</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
     <script>
       const { ipcRenderer } = require("electron");
+      const PrimeTest = require("./prime-algorithms.js");
 
-      function checkNumber() {
+      async function checkNumber() {
         const number = parseInt(document.getElementById("numberInput").value);
+        const method = document.getElementById("methodSelect").value;
+
         if (isNaN(number) || number < 2) {
           alert("Iltimos, 2 dan katta son kiriting");
           return;
         }
-        ipcRenderer.send("check-prime", number);
+
+        const startTime = performance.now();
+        let results = [];
+
+        if (method === "all" || method === "fermat") {
+          results.push(PrimeTest.fermatTest(number));
+        }
+        if (method === "all" || method === "solovay") {
+          results.push(PrimeTest.solovayStrassenTest(number));
+        }
+        if (method === "all" || method === "miller") {
+          results.push(PrimeTest.millerRabinTest(number));
+        }
+        if (method === "all" || method === "aks") {
+          results.push(PrimeTest.aksTest(number));
+        }
+
+        const endTime = performance.now();
+        const executionTime = (endTime - startTime).toFixed(2);
+
+        displayResults(number, results, executionTime);
       }
 
-      ipcRenderer.on("prime-result", (event, result) => {
-        const resultDiv = document.getElementById("result");
-        const historyTable = document.getElementById("historyTable");
+      function displayResults(number, results, executionTime) {
+        const resultsDiv = document.getElementById("results");
+        const historyTable = document
+          .getElementById("historyTable")
+          .getElementsByTagName("tbody")[0];
 
-        // Natijani ko'rsatish
-        resultDiv.innerHTML = `
-                <h3>${result.number} soni ${
-          result.isPrime ? "tub" : "tub emas"
-        }</h3>
-                <p>Aniqlik: ${(result.probability * 100).toFixed(2)}%</p>
-                <p>Tekshirishlar soni: ${result.iterations}</p>
-            `;
-        resultDiv.className = `result ${
-          result.isPrime ? "prime" : "not-prime"
-        }`;
+        let html = `<h3>${number} soni tekshiruvi:</h3>`;
 
-        // Tarixga qo'shish
-        const row = historyTable.insertRow(0);
-        row.innerHTML = `
-                <td>${result.number}</td>
-                <td>${result.isPrime ? "Tub" : "Tub emas"}</td>
-                <td>${(result.probability * 100).toFixed(2)}%</td>
-                <td>${new Date().toLocaleTimeString()}</td>
-            `;
-      });
+        results.forEach((result) => {
+          const row = historyTable.insertRow(0);
+          row.innerHTML = `
+                    <td>${number}</td>
+                    <td>${result.method}</td>
+                    <td>${result.isPrime ? "Tub" : "Tub emas"}</td>
+                    <td>${
+                      result.confidence
+                        ? result.confidence.toFixed(2) + "%"
+                        : "N/A"
+                    }</td>
+                    <td>${executionTime}ms</td>
+                `;
+
+          html += `
+                    <div class="method-info">
+                        <h4>${result.method} natijasi:</h4>
+                        <p>Son ${result.isPrime ? "tub" : "tub emas"}</p>
+                        ${
+                          result.confidence
+                            ? `<p>Aniqlik: ${result.confidence.toFixed(2)}%</p>`
+                            : ""
+                        }
+                    </div>
+                `;
+        });
+
+        html += `<p>Umumiy tekshiruv vaqti: ${executionTime}ms</p>`;
+        resultsDiv.innerHTML = html;
+      }
     </script>
   </body>
 </html>
