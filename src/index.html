@@ -1,0 +1,105 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tub sonlarni tekshirish</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .prime {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .not-prime {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .history {
+        margin-top: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tub sonlarni tekshirish dasturi</h1>
+    <div>
+      <input type="number" id="numberInput" placeholder="Sonni kiriting" />
+      <button onclick="checkNumber()">Tekshirish</button>
+    </div>
+    <div id="result" class="result"></div>
+    <div class="history">
+      <h2>Tekshirishlar tarixi</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Son</th>
+            <th>Natija</th>
+            <th>Aniqlik</th>
+            <th>Vaqt</th>
+          </tr>
+        </thead>
+        <tbody id="historyTable"></tbody>
+      </table>
+    </div>
+
+    <script>
+      const { ipcRenderer } = require("electron");
+
+      function checkNumber() {
+        const number = parseInt(document.getElementById("numberInput").value);
+        if (isNaN(number) || number < 2) {
+          alert("Iltimos, 2 dan katta son kiriting");
+          return;
+        }
+        ipcRenderer.send("check-prime", number);
+      }
+
+      ipcRenderer.on("prime-result", (event, result) => {
+        const resultDiv = document.getElementById("result");
+        const historyTable = document.getElementById("historyTable");
+
+        // Natijani ko'rsatish
+        resultDiv.innerHTML = `
+                <h3>${result.number} soni ${
+          result.isPrime ? "tub" : "tub emas"
+        }</h3>
+                <p>Aniqlik: ${(result.probability * 100).toFixed(2)}%</p>
+                <p>Tekshirishlar soni: ${result.iterations}</p>
+            `;
+        resultDiv.className = `result ${
+          result.isPrime ? "prime" : "not-prime"
+        }`;
+
+        // Tarixga qo'shish
+        const row = historyTable.insertRow(0);
+        row.innerHTML = `
+                <td>${result.number}</td>
+                <td>${result.isPrime ? "Tub" : "Tub emas"}</td>
+                <td>${(result.probability * 100).toFixed(2)}%</td>
+                <td>${new Date().toLocaleTimeString()}</td>
+            `;
+      });
+    </script>
+  </body>
+</html>
