@@ -1,7 +1,141 @@
+/* Umumiy sozlamalar */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
+  font-family: "Arial", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+header button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+header button:hover {
+  background-color: #0056b3;
+}
+
+/* Qidiruv bo'limi */
+#search-section {
+  margin: 20px 0;
+}
+
+#search-bar {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Eslatmalar */
+#notes-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.note-card {
+  background-color: white;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.note-card button {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.note-card button:hover {
+  background-color: darkred;
+}
+
+.note-category {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.note-time {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+/* Kategoriya ranglari */
+.note-card.ish {
+  border-left: 5px solid #007bff; /* Ish kategoriya - Moviy */
+}
+
+.note-card.shaxsiy {
+  border-left: 5px solid #28a745; /* Shaxsiy kategoriya - Yashil */
+}
+
+.note-card.muzika {
+  border-left: 5px solid #e83e8c; /* Muzika kategoriya - Pink */
+}
+
+.note-card.sport {
+  border-left: 5px solid #ffc107; /* Sport kategoriya - Sariq */
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 400px;
+  text-align: center;
+}
+
+.modal-actions button {
+  margin: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
 }
