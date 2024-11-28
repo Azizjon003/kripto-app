@@ -36,7 +36,6 @@ function createWindow() {
   });
   console.log(path.join(__dirname, "preload.js"));
   mainWindow.loadFile("src/index.html");
-  mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
