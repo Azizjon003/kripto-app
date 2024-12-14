@@ -1,185 +1,75 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>Tub sonlarni tekshirish</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      .controls {
-        margin-bottom: 20px;
-      }
-      .result-panel {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 5px;
-        background-color: #f5f5f5;
-      }
-      .method-info {
-        margin-top: 10px;
-        padding: 10px;
-        background-color: #e9ecef;
-        border-radius: 5px;
-      }
-      .algorithm-info {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-      th {
-        background-color: #f4f4f4;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    <h1>Tub sonlarni tekshirish</h1>
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h2>Tub sonlarni tekshirish</h2>
+        </div>
+        <div class="card-content">
+          <div class="mode-toggle">
+            <input type="checkbox" id="largeNumberMode" class="mode-checkbox" />
+            <label for="largeNumberMode">Katta sonlar</label>
+          </div>
 
-    <div class="controls">
-      <input type="number" id="numberInput" placeholder="Sonni kiriting" />
-      <select id="methodSelect">
-        <option value="all">Barcha usullar</option>
-        <option value="fermat">Ferma testi</option>
-        <option value="solovay">Solovay-Strassen testi</option>
-        <option value="miller">Miller-Rabin testi</option>
-        <option value="aks">AKS algoritmi</option>
-      </select>
-      <button onclick="checkNumber()">Tekshirish</button>
+          <!-- Standard input (default mode) -->
+          <div id="standardInputGroup" class="input-group">
+            <input
+              type="number"
+              id="numberInput"
+              class="number-input"
+              placeholder="Sonni kiriting"
+            />
+            <button id="checkButton" class="check-button">Tekshirish</button>
+          </div>
+
+          <!-- Large number input (hidden by default) -->
+          <div id="largeInputGroup" class="input-group hidden">
+            <textarea
+              id="largeNumberInput"
+              class="large-number-input"
+              placeholder="Katta sonni kiriting"
+            ></textarea>
+            <button id="checkLargeButton" class="check-button">
+              Tekshirish
+            </button>
+          </div>
+
+          <!-- Results area -->
+          <div id="standardResults">
+            <div class="charts-container">
+              <div class="chart-card">
+                <h3>Guvohlar statistikasi</h3>
+                <canvas id="witnessChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Bajarilish vaqti</h3>
+                <canvas id="timeChart"></canvas>
+              </div>
+            </div>
+            <div id="results" class="results-container"></div>
+          </div>
+
+          <!-- Large number results (simplified) -->
+          <div id="largeResults" class="hidden">
+            <div class="result-card">
+              <div id="largeNumberResult"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div id="results" class="result-panel"></div>
-
-    <div class="algorithm-info">
-      <h3>Algoritmlar haqida ma'lumot:</h3>
-      <div class="method-info">
-        <h4>Ferma testi</h4>
-        <p>
-          Ferma kichik teoremasiga asoslangan probabilistik test. a^(n-1) ≡ 1
-          (mod n) tenglamani tekshiradi.
-        </p>
-      </div>
-      <div class="method-info">
-        <h4>Solovay-Strassen testi</h4>
-        <p>
-          Jacobi simboli va modulli arifmetikaga asoslangan probabilistik test.
-        </p>
-      </div>
-      <div class="method-info">
-        <h4>Miller-Rabin testi</h4>
-        <p>
-          Eng keng tarqalgan probabilistik test. Yuqori aniqlik va tezlikni
-          ta'minlaydi.
-        </p>
-      </div>
-      <div class="method-info">
-        <h4>AKS algoritmi</h4>
-        <p>
-          Deterministic algoritm. 100% aniqlik beradi, lekin sekinroq ishlaydi.
-        </p>
-      </div>
-    </div>
-
-    <table id="historyTable">
-      <thead>
-        <tr>
-          <th>Son</th>
-          <th>Usul</th>
-          <th>Natija</th>
-          <th>Aniqlik</th>
-          <th>Vaqt</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <script>
-      const { ipcRenderer } = require("electron");
-      const PrimeTest = require("./prime-algorithms.js");
-
-      async function checkNumber() {
-        const number = parseInt(document.getElementById("numberInput").value);
-        const method = document.getElementById("methodSelect").value;
-
-        if (isNaN(number) || number < 2) {
-          alert("Iltimos, 2 dan katta son kiriting");
-          return;
-        }
-
-        const startTime = performance.now();
-        let results = [];
-
-        if (method === "all" || method === "fermat") {
-          results.push(PrimeTest.fermatTest(number));
-        }
-        if (method === "all" || method === "solovay") {
-          results.push(PrimeTest.solovayStrassenTest(number));
-        }
-        if (method === "all" || method === "miller") {
-          results.push(PrimeTest.millerRabinTest(number));
-        }
-        if (method === "all" || method === "aks") {
-          results.push(PrimeTest.aksTest(number));
-        }
-
-        const endTime = performance.now();
-        const executionTime = (endTime - startTime).toFixed(2);
-
-        displayResults(number, results, executionTime);
-      }
-
-      function displayResults(number, results, executionTime) {
-        const resultsDiv = document.getElementById("results");
-        const historyTable = document
-          .getElementById("historyTable")
-          .getElementsByTagName("tbody")[0];
-
-        let html = `<h3>${number} soni tekshiruvi:</h3>`;
-
-        results.forEach((result) => {
-          const row = historyTable.insertRow(0);
-          row.innerHTML = `
-                    <td>${number}</td>
-                    <td>${result.method}</td>
-                    <td>${result.isPrime ? "Tub" : "Tub emas"}</td>
-                    <td>${
-                      result.confidence
-                        ? result.confidence.toFixed(2) + "%"
-                        : "N/A"
-                    }</td>
-                    <td>${executionTime}ms</td>
-                `;
-
-          html += `
-                    <div class="method-info">
-                        <h4>${result.method} natijasi:</h4>
-                        <p>Son ${result.isPrime ? "tub" : "tub emas"}</p>
-                        ${
-                          result.confidence
-                            ? `<p>Aniqlik: ${result.confidence.toFixed(2)}%</p>`
-                            : ""
-                        }
-                    </div>
-                `;
-        });
-
-        html += `<p>Umumiy tekshiruv vaqti: ${executionTime}ms</p>`;
-        resultsDiv.innerHTML = html;
-      }
+    <script type="module">
+      const { primalityTest } = require("./prime.js");
+      window.primalityTest = primalityTest; // Global scope'ga chiqarish
     </script>
+    <script src="prime-algorithms.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
